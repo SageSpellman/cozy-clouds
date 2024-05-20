@@ -1,42 +1,49 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const User = require('../../models/user');
-const fetchWeatherData = require('../../models/weather');
 
 module.exports = {
   create,
   login,
-  getWeather,
+  checkToken
 };
+
+function checkToken(req, res) {
+  console.log('req.user', req.user);
+  res.json(req.exp);
+}
 
 async function create(req, res) {
   try {
-    // Add the user to the db
     const user = await User.create(req.body);
     const token = createJWT(user);
-    const weatherData = await fetchWeatherData('New York'); // made NY the default but can be changed 
-    res.json({ token, weatherData });
+    res.json(token);
   } catch (err) {
-    res.status(400).json(' Bad Credentials');
+    res.status(400).json(err);
   }
 }
 
 async function login(req, res) {
   try {
-    const user = await User.findOne({ email: req.body.email });
+    const user = await User.findOne({email: req.body.email});
     if (!user) throw new Error();
+
     const match = await bcrypt.compare(req.body.password, user.password);
     if (!match) throw new Error();
+
     const token = createJWT(user);
-    const weatherData = await fetchWeatherData('New York'); // fetching data from default city 
-    res.json({ token, weatherData });
+    res.json(token);
   } catch (err) {
     res.status(400).json('Bad Credentials');
   }
 }
 
-/*--- Helper Functions --*/
+function checkToken(req, res) {
+  console.log('res.user', req.user);
+  res.json(req.exp);
+}
 
+//helper function
 function createJWT(user) {
   return jwt.sign(
     // data payload
@@ -45,3 +52,4 @@ function createJWT(user) {
     { expiresIn: '24h' }
   );
 }
+
